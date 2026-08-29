@@ -1,0 +1,8 @@
+.DS_Store
+.serena/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+dist/
+remote_repo/
+*.zip

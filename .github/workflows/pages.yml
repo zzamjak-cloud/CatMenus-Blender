@@ -1,0 +1,44 @@
+name: Pages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  pages:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender
+        uses: moguri/setup-blender@v1
+        with:
+          blender-version: "4.2"
+      - name: Download release zips
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p remote_repo
+          gh release list --limit 200 --json tagName --jq '.[].tagName' | while read -r tag; do
+            gh release download "$tag" --pattern "*.zip" --dir remote_repo --clobber
+          done
+      - name: Generate index
+        run: blender --background --factory-startup --command extension server-generate --repo-dir remote_repo --html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: remote_repo
+      - id: deployment
+        uses: actions/deploy-pages@v4

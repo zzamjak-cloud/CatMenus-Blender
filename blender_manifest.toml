@@ -1,0 +1,35 @@
+schema_version = "1.0.0"
+
+id = "cat_menus"
+version = "0.1.1"
+name = "CAT Menus"
+tagline = "CAT production tools for Blender"
+maintainer = "Woody"
+type = "add-on"
+
+website = "https://github.com/zzamjak-cloud/CatMenus-Blender"
+tags = ["3D View"]
+blender_version_min = "4.2.0"
+
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+
+[permissions]
+files = "Export UV OBJ and FBX files selected by the user"
+
+[build]
+paths_exclude_pattern = [
+  "__pycache__/",
+  "/.git/",
+  "/.github/",
+  "/.serena/",
+  "/dist/",
+  "/remote_repo/",
+  "/scripts/",
+  "/tests/",
+  "/.gitignore",
+  "/CHANGELOG.md",
+  "/README.md",
+  "/*.zip",
+]
