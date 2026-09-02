@@ -1,8 +1,8 @@
-name: Pages
+# 정상 릴리즈 시의 Pages 배포는 release.yml 의 pages 잡이 담당한다.
+# 이 워크플로는 인덱스를 수동으로 다시 생성해야 할 때만 사용한다.
+name: Pages (manual)
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
 
 permissions:
