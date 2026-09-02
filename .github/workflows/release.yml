@@ -44,14 +44,17 @@ jobs:
         uses: moguri/setup-blender@v1
         with:
           blender-version: "4.2"
-      - name: Download release zips
+      # index.json 에 같은 id 가 두 번 이상 들어가면 Blender 가 표시용으로는
+      # 마지막 항목(최신)을, 설치용으로는 첫 항목(구버전)을 골라
+      # 업데이트 버튼을 눌러도 같은 버전이 재설치된다.
+      # 따라서 이번에 릴리즈한 zip 하나만 인덱싱한다.
+      - name: Download release zip
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          rm -rf remote_repo
           mkdir -p remote_repo
-          gh release list --limit 200 --json tagName --jq '.[].tagName' | while read -r tag; do
-            gh release download "$tag" --pattern "*.zip" --dir remote_repo --clobber
-          done
+          gh release download "${GITHUB_REF_NAME}" --pattern "*.zip" --dir remote_repo --clobber
       - name: Generate index
         run: blender --background --factory-startup --command extension server-generate --repo-dir remote_repo --html
       - uses: actions/configure-pages@v5

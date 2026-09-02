@@ -26,14 +26,14 @@ jobs:
         uses: moguri/setup-blender@v1
         with:
           blender-version: "4.2"
-      - name: Download release zips
+      # 한 id 당 한 항목만 유지해야 업데이트 설치가 정상 동작한다. (release.yml 주석 참고)
+      - name: Download latest release zip
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          rm -rf remote_repo
           mkdir -p remote_repo
-          gh release list --limit 200 --json tagName --jq '.[].tagName' | while read -r tag; do
-            gh release download "$tag" --pattern "*.zip" --dir remote_repo --clobber
-          done
+          gh release download --pattern "*.zip" --dir remote_repo --clobber
       - name: Generate index
         run: blender --background --factory-startup --command extension server-generate --repo-dir remote_repo --html
       - uses: actions/configure-pages@v5
