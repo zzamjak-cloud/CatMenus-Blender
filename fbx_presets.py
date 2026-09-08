@@ -3,7 +3,7 @@
 프리셋은 Blender 사용자 설정 디렉터리(`CONFIG/cat_menus/fbx_presets.json`)에
 JSON 형태로 저장되므로 블렌드 파일이나 애드온 재설치와 무관하게 유지된다.
 저장되는 키 이름은 `bpy.ops.export_scene.fbx()` 인자 이름과 맞추고,
-CAT 전용 항목(`export_subdir`)만 예외로 둔다.
+CAT 전용 항목(`export_dir`)만 예외로 둔다.
 """
 
 import json
@@ -20,8 +20,7 @@ STORE_VERSION = 1
 
 # 프리셋 기본값. `+프리셋` 대화창의 초기값이자 저장값 보정 기준이 된다.
 DEFAULT_PRESET = {
-    "export_dir": "",                   # 고정 내보내기 폴더. 비우면 export_subdir을 사용한다
-    "export_subdir": "FBX",             # .blend 파일 옆에 만들 내보내기 폴더 이름
+    "export_dir": "",                   # 내보내기 폴더. 비우면 블렌드 파일이 있는 폴더에 바로 내보낸다
     "object_types": ["MESH"],           # 내보낼 오브젝트 타입
     "use_mesh_modifiers": True,         # 모디파이어 적용 여부
     "mesh_smooth_type": "FACE",         # 스무딩 정보 방식
@@ -37,7 +36,7 @@ DEFAULT_PRESET = {
 }
 
 # CAT 전용 키. `bpy.ops.export_scene.fbx()` 로 넘기지 않는다.
-CAT_ONLY_KEYS = ("export_dir", "export_subdir")
+CAT_ONLY_KEYS = ("export_dir",)
 
 # 열거형 항목 정의. 대화창과 저장값 검증에 함께 사용한다.
 OBJECT_TYPE_ITEMS = (
@@ -151,34 +150,15 @@ def normalize_preset(raw):
             if isinstance(value, str):
                 preset[key] = value
 
-    # 내보내기 폴더 이름은 경로 구분자와 공백을 제거해 안전하게 만든다.
-    preset["export_subdir"] = sanitize_subdir(preset["export_subdir"])
     preset["export_dir"] = (preset["export_dir"] or "").strip()
     return preset
-
-
-def sanitize_subdir(name):
-    """내보내기 하위 폴더 이름에서 위험한 문자를 제거한다.
-
-    Args:
-        name: 사용자가 입력한 폴더 이름
-
-    Returns:
-        경로 탈출과 잘못된 문자를 제거한 폴더 이름. 비면 기본값.
-    """
-    cleaned = (name or "").strip().strip("/\\")
-    for bad in '<>:"|?*':
-        cleaned = cleaned.replace(bad, "_")
-    # 상위 경로 이동을 막는다.
-    parts = [part for part in cleaned.replace("\\", "/").split("/") if part not in ("", ".", "..")]
-    return "/".join(parts) or DEFAULT_PRESET["export_subdir"]
 
 
 def resolve_export_dir(preset, blend_filepath):
     """프리셋 설정으로 실제 내보내기 폴더 경로를 계산한다.
 
-    `export_dir`이 지정되어 있으면 그 폴더를 그대로 쓰고, 비어 있으면
-    블렌드 파일이 있는 폴더 아래에 `export_subdir` 폴더를 쓴다.
+    `export_dir`이 지정되어 있으면 그 폴더로 바로 내보내고, 비어 있으면
+    블렌드 파일이 있는 폴더에 바로 내보낸다. 하위 폴더를 따로 만들지 않는다.
 
     Args:
         preset: 설정 딕셔너리
@@ -206,8 +186,7 @@ def resolve_export_dir(preset, blend_filepath):
     if not blend_filepath:
         return "", "블렌드 파일을 먼저 저장하거나 프리셋에 내보내기 폴더를 지정하세요."
 
-    subdir_parts = settings["export_subdir"].split("/")
-    return os.path.normpath(os.path.join(os.path.dirname(blend_filepath), *subdir_parts)), ""
+    return os.path.normpath(os.path.dirname(blend_filepath)), ""
 
 
 def load_presets():

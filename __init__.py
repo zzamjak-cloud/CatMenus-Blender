@@ -3,7 +3,7 @@ import bpy
 bl_info = {
     "name": "CatMenus",
     "author": "Woody",
-    "version": (0, 1, 3),
+    "version": (0, 1, 4),
     "blender": (4, 2, 0),
     "description": "캐주얼G팀 CAT 메뉴 제작에 필요한 애드온입니다.",
     "doc_url": "https://treenod.atlassian.net/wiki/spaces/CGP/pages/71737541370/CAT",

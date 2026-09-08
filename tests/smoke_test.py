@@ -105,7 +105,7 @@ def check_fbx_presets():
         result = bpy.ops.object.export_fbx_preset_add(
             'EXEC_DEFAULT',
             preset_name=preset_name,
-            export_subdir="FBX_SMOKE",
+            export_dir="",
             object_types={'MESH'},
             mesh_smooth_type='EDGE',
             use_triangles=True,
@@ -122,7 +122,7 @@ def check_fbx_presets():
 
         stored = fbx_presets.get_preset(preset_name)
         for key, expected in (
-            ("export_subdir", "FBX_SMOKE"),
+            ("export_dir", ""),
             ("mesh_smooth_type", "EDGE"),
             ("use_triangles", True),
             ("global_scale", 2.0),
@@ -153,9 +153,14 @@ def check_fbx_presets():
             if result != {"FINISHED"}:
                 fail(f"프리셋 내보내기 실패: {result}")
 
-            exported = blend_path.parent / "FBX_SMOKE" / "SmokeCube.fbx"
+            # 폴더를 비운 프리셋은 하위 폴더 없이 블렌드 파일이 있는 폴더에 바로 내보낸다.
+            exported = blend_path.parent / "SmokeCube.fbx"
             if not exported.is_file():
                 fail(f"FBX 파일이 생성되지 않았습니다: {exported}")
+
+            subdirs = [child.name for child in blend_path.parent.iterdir() if child.is_dir()]
+            if subdirs:
+                fail(f"하위 폴더가 만들어졌습니다: {subdirs}")
 
             if not cube.select_get():
                 fail("내보내기 후 선택 상태가 복원되지 않았습니다.")
@@ -266,7 +271,6 @@ def check_fixed_export_dir(fbx_presets):
             'EXEC_DEFAULT',
             preset_name=preset_name,
             export_dir=str(fixed_dir),
-            export_subdir="SHOULD_NOT_BE_USED",
         )
         if result != {"FINISHED"}:
             fail(f"폴더 지정 프리셋 등록 실패: {result}")
@@ -297,13 +301,19 @@ def check_fixed_export_dir(fbx_presets):
             if not exported.is_file():
                 fail(f"지정한 폴더에 FBX가 생성되지 않았습니다: {exported}")
 
-            blend_sibling = pathlib.Path(bpy.data.filepath).parent / "SHOULD_NOT_BE_USED"
-            if blend_sibling.exists():
-                fail(f"폴더를 지정했는데도 블렌드 파일 옆 폴더가 만들어졌습니다: {blend_sibling}")
+            if [child.name for child in fixed_dir.iterdir() if child.is_dir()]:
+                fail(f"지정한 폴더 안에 하위 폴더가 만들어졌습니다: {fixed_dir}")
 
-            # 폴더를 비운 프리셋은 블렌드 파일이 없으면 오류를 내야 한다.
+            # 폴더를 비운 프리셋은 블렌드 파일 폴더를 그대로 쓰고, 저장 전이면 오류를 낸다.
             empty = dict(stored)
             empty["export_dir"] = ""
+            blend_path = pathlib.Path(temp_dir) / "resolve.blend"
+            resolved, error = fbx_presets.resolve_export_dir(empty, str(blend_path))
+            if error:
+                fail(f"폴더를 비운 프리셋 경로 계산 실패: {error}")
+            if pathlib.Path(resolved) != blend_path.parent:
+                fail(f"폴더를 비웠는데 블렌드 파일 폴더가 아닙니다: {resolved}")
+
             _, error = fbx_presets.resolve_export_dir(empty, "")
             if not error:
                 fail("블렌드 파일이 없고 폴더도 비었는데 오류가 나지 않았습니다.")
@@ -359,9 +369,15 @@ def check_menu_draw():
         add_class = export_fbx.ExportFBXPresetAdd
         add_class.draw(DrawHost(StubLayout(log), add_class.bl_idname), bpy.context)
         drawn = {entry[1] for entry in log if entry[0] == "prop"}
-        missing = {"preset_name", "export_dir", "export_subdir", "object_types"} - drawn
+        missing = {"preset_name", "export_dir", "object_types"} - drawn
         if missing:
             fail(f"+프리셋 대화창에 빠진 프로퍼티가 있습니다: {sorted(missing)}")
+
+        # FBX 하위 폴더 이름 설정은 제거되었다.
+        if resolve_operator_property(add_class.bl_idname, "export_subdir") is not None:
+            fail("제거된 export_subdir 프로퍼티가 남아 있습니다.")
+        if "export_subdir" in fbx_presets.DEFAULT_PRESET:
+            fail("제거된 export_subdir 기본값이 남아 있습니다.")
     finally:
         fbx_presets.remove_preset(preset_name)
 

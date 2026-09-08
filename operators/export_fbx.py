@@ -29,7 +29,7 @@ class ExportFBX(bpy.types.Operator):
             self.report({'ERROR'}, f"프리셋을 찾을 수 없습니다: {self.preset_name}")
             return {'CANCELLED'}
 
-        # 프리셋에 폴더가 지정되어 있으면 그 폴더로, 없으면 블렌드 파일 옆 폴더로 내보낸다.
+        # 프리셋에 폴더가 지정되어 있으면 그 폴더로, 없으면 블렌드 파일이 있는 폴더로 내보낸다.
         export_dir, path_error = fbx_presets.resolve_export_dir(preset, bpy.data.filepath)
         if path_error:
             self.report({'ERROR'}, path_error)
@@ -86,14 +86,9 @@ class ExportFBXPresetAdd(bpy.types.Operator):
     )
     export_dir: StringProperty(
         name="내보내기 폴더",
-        description="FBX를 저장할 폴더. 지정하면 이 폴더로 바로 내보내고, 비우면 아래 폴더 이름을 사용",
+        description="FBX를 저장할 폴더. 비우면 블렌드 파일이 있는 폴더에 바로 내보냄",
         default=fbx_presets.DEFAULT_PRESET["export_dir"],
         subtype='DIR_PATH',
-    )
-    export_subdir: StringProperty(
-        name="폴더 이름",
-        description="내보내기 폴더를 비웠을 때 블렌드 파일 옆에 만들 폴더 이름",
-        default=fbx_presets.DEFAULT_PRESET["export_subdir"],
     )
     object_types: EnumProperty(
         name="오브젝트 타입",
@@ -175,10 +170,6 @@ class ExportFBXPresetAdd(bpy.types.Operator):
 
         layout.prop(self, "preset_name")
         layout.prop(self, "export_dir")
-        row = layout.row()
-        # 고정 폴더를 지정하면 블렌드 파일 옆 폴더 이름은 쓰이지 않는다.
-        row.enabled = not self.export_dir.strip()
-        row.prop(self, "export_subdir")
 
         layout.separator()
         column = layout.column(heading="오브젝트 타입")
@@ -212,7 +203,6 @@ class ExportFBXPresetAdd(bpy.types.Operator):
 
         settings = {
             "export_dir": self.export_dir,
-            "export_subdir": self.export_subdir,
             "object_types": sorted(self.object_types),
             "use_mesh_modifiers": self.use_mesh_modifiers,
             "mesh_smooth_type": self.mesh_smooth_type,
