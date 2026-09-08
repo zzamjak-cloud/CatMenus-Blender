@@ -22,7 +22,8 @@ if ($LASTEXITCODE -ne 0) {
 $BlenderVersion = (($VersionOutput | Select-Object -First 1) -split "\s+")[1]
 
 if ([string]::IsNullOrWhiteSpace($env:CATMENUS_BLENDER_PROFILE)) {
-    $ProfileDir = Join-Path $RootDir ".blender-profile\$BlenderVersion"
+    # 저장소 안에 프로필을 두면 Extension 링크가 자기 자신을 가리켜 빌드가 무한 재귀한다.
+    $ProfileDir = Join-Path $env:LOCALAPPDATA "Blender Foundation\Blender\CatMenusBlenderDev\$BlenderVersion"
 } else {
     $ProfileDir = $env:CATMENUS_BLENDER_PROFILE
 }

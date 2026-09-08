@@ -2,7 +2,7 @@ from .match_name import MatchName
 from .block_sort import BlockSort
 from .export_uv import ExportUV
 from .export_obj import ExportOBJ
-from .export_fbx import ExportFBX
+from .export_fbx import ExportFBX, ExportFBXPresetAdd, ExportFBXPresetRemove
 from .collision_maker import CollisionMaker
 from .picking_maker import PickingMaker
 from .clean_setting import CleanSetting
@@ -15,6 +15,8 @@ OPERATOR_CLASSES = (
     ExportUV,
     ExportOBJ,
     ExportFBX,
+    ExportFBXPresetAdd,
+    ExportFBXPresetRemove,
     CollisionMaker,
     PickingMaker,
     CleanSetting,

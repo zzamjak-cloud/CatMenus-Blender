@@ -1,4 +1,5 @@
 import hashlib
+import os
 import pathlib
 import shutil
 import subprocess
@@ -9,6 +10,7 @@ import tomllib
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 REMOTE_REPO = ROOT / "remote_repo"
+# 기본 실행 파일 경로. BLENDER_BINARY 환경 변수로 재정의할 수 있다.
 BLENDER = pathlib.Path("/Applications/Blender.app/Contents/MacOS/Blender")
 
 
@@ -23,7 +25,9 @@ def main():
     version = manifest["version"]
     zip_path = DIST / f"{addon_id}-v{version}.zip"
 
-    blender_binary = pathlib.Path(shutil.which("blender") or BLENDER)
+    blender_binary = pathlib.Path(
+        os.environ.get("BLENDER_BINARY") or shutil.which("blender") or BLENDER
+    )
     if not blender_binary.exists():
         raise SystemExit(f"Blender 실행 파일을 찾을 수 없습니다: {blender_binary}")
 

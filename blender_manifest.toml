@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "cat_menus"
-version = "0.1.2"
+version = "0.1.3"
 name = "CAT Menus"
 tagline = "CAT production tools for Blender"
 maintainer = "Woody"
@@ -21,9 +21,11 @@ files = "Export UV OBJ and FBX files selected by the user"
 [build]
 paths_exclude_pattern = [
   "__pycache__/",
+  "/.blender-profile/",
   "/.git/",
   "/.github/",
   "/.serena/",
+  "/.omc/",
   "/dist/",
   "/remote_repo/",
   "/scripts/",
