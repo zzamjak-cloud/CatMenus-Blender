@@ -1,5 +1,15 @@
 # 변경 이력
 
+## 0.2.0
+
+- 프리셋 대화창의 옵션을 Blender 내보내기 연산자에서 그대로 복제하도록 바꿨습니다. 항목·영문 라벨·설명·기본값·범위가 Blender 기본 FBX/OBJ 내보내기 설정과 같고, `Include / Transform / Geometry / Armature / Animation` 패널 구성도 동일합니다.
+- FBX 애니메이션 옵션(`Baked Animation`, `Key All Bones`, `NLA Strips`, `All Actions`, `Force Start/End Keying`, `Sampling Rate`, `Simplify`)을 프리셋에 추가했습니다. 그 밖에 빠져 있던 `Loose Edges`, `Tangent Space`, `Vertex Colors`, `Export Subdivision Surface`, `Use Space Transform`, `Apply Transform`, 아마추어 옵션 전체, `Embed Textures`도 포함됩니다.
+- `Export Mode`(CAT 전용) 항목을 추가했습니다. `Per Object`는 기존처럼 오브젝트마다 파일을 만들고, `Single File`은 선택 전체를 액티브 오브젝트 이름의 파일 하나로 내보냅니다. 아마추어와 스킨 메시를 한 파일에 담아야 하는 애니메이션 내보내기에 사용합니다.
+- Export OBJ에도 같은 프리셋 기능을 적용했습니다. `Cat > Export OBJ`가 하위 메뉴가 되고, 프리셋 등록·실행·삭제가 FBX와 동일하게 동작합니다.
+- 하위 메뉴의 `+프리셋` 항목 이름을 `프리셋`으로 바꿨습니다.
+- 프리셋 저장 파일을 `cat_menus/export_presets.json`으로 통합했습니다. 기존 `cat_menus/fbx_presets.json`의 FBX 프리셋은 처음 읽을 때 자동으로 옮겨집니다.
+- 이 Blender 버전에 없는 옵션이 저장된 프리셋은 해당 항목만 기본값으로 처리하고 나머지는 그대로 유지합니다.
+
 ## 0.1.4
 
 - 내보내기 폴더 아래에 `FBX` 하위 폴더를 자동으로 만드는 동작을 제거했습니다. 프리셋에 지정한 폴더에 FBX가 바로 저장됩니다.

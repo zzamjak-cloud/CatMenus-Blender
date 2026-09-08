@@ -1,6 +1,6 @@
 import bpy
 
-from . import fbx_presets
+from . import export_presets
 from .operators import (
     BlockRotationInfo,
     BlockSort,
@@ -10,6 +10,8 @@ from .operators import (
     ExportFBXPresetAdd,
     ExportFBXPresetRemove,
     ExportOBJ,
+    ExportOBJPresetAdd,
+    ExportOBJPresetRemove,
     ExportUV,
     MatchName,
     MissionIconMaker,
@@ -17,29 +19,55 @@ from .operators import (
 )
 
 
-class ExportFBXPresetMenu(bpy.types.Menu):
-    """로컬에 저장된 FBX 내보내기 프리셋 목록"""
-    bl_idname = "OBJECT_MT_cat_menus_export_fbx_presets"
-    bl_label = "Export FBX"
+class ExportPresetMenu:
+    """로컬에 저장된 내보내기 프리셋 목록을 그리는 하위 메뉴 공통 구현."""
+
+    # 상속 클래스에서 지정한다.
+    preset_key = ""
+    run_operator = None
+    add_operator = None
+    remove_operator = None
 
     def draw(self, context):
         layout = self.layout
 
-        names = fbx_presets.preset_names()
+        names = export_presets.preset_names(self.preset_key)
         if not names:
             layout.label(text="등록된 프리셋이 없습니다", icon='INFO')
 
         for name in names:
             row = layout.row(align=True)
             # 프리셋으로 즉시 내보내기
-            run = row.operator(ExportFBX.bl_idname, text=name, icon='EXPORT')
+            run = row.operator(self.run_operator.bl_idname, text=name, icon='EXPORT')
             run.preset_name = name
             # 프리셋 삭제
-            remove = row.operator(ExportFBXPresetRemove.bl_idname, text="", icon='X', emboss=False)
+            remove = row.operator(self.remove_operator.bl_idname, text="", icon='X', emboss=False)
             remove.preset_name = name
 
         layout.separator()
-        layout.operator(ExportFBXPresetAdd.bl_idname, text=ExportFBXPresetAdd.bl_label, icon='ADD') # +프리셋
+        layout.operator(self.add_operator.bl_idname, text=self.add_operator.bl_label, icon='ADD')
+
+
+class ExportFBXPresetMenu(ExportPresetMenu, bpy.types.Menu):
+    """로컬에 저장된 FBX 내보내기 프리셋 목록"""
+    bl_idname = "OBJECT_MT_cat_menus_export_fbx_presets"
+    bl_label = "Export FBX"
+
+    preset_key = export_presets.FBX_KEY
+    run_operator = ExportFBX
+    add_operator = ExportFBXPresetAdd
+    remove_operator = ExportFBXPresetRemove
+
+
+class ExportOBJPresetMenu(ExportPresetMenu, bpy.types.Menu):
+    """로컬에 저장된 OBJ 내보내기 프리셋 목록"""
+    bl_idname = "OBJECT_MT_cat_menus_export_obj_presets"
+    bl_label = "Export OBJ"
+
+    preset_key = export_presets.OBJ_KEY
+    run_operator = ExportOBJ
+    add_operator = ExportOBJPresetAdd
+    remove_operator = ExportOBJPresetRemove
 
 
 class CatMenusMenu(bpy.types.Menu):
@@ -55,7 +83,7 @@ class CatMenusMenu(bpy.types.Menu):
         layout.separator()
             # Export UV / OBJ / FBX
         layout.operator(ExportUV.bl_idname, text=ExportUV.bl_label, icon="TEXTURE") # Export UV
-        layout.operator(ExportOBJ.bl_idname, text=ExportOBJ.bl_label, icon='EXPORT') # Export OBJ
+        layout.menu(ExportOBJPresetMenu.bl_idname, text=ExportOBJPresetMenu.bl_label, icon='EXPORT') # Export OBJ 프리셋 하위 메뉴
         layout.menu(ExportFBXPresetMenu.bl_idname, text=ExportFBXPresetMenu.bl_label, icon='EXPORT') # Export FBX 프리셋 하위 메뉴
         layout.separator()
             # Colission / Picking

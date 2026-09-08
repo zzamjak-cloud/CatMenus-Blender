@@ -1,38 +1,34 @@
-import os
+"""OBJ 프리셋 내보내기 연산자.
+
+옵션은 Blender의 `wm.obj_export` 연산자에서 그대로 복제하므로 대화창 항목이
+Blender 기본 OBJ 내보내기 설정과 같다. 자세한 내용은 `export_presets` 참고.
+"""
 
 import bpy
 
+from .. import export_presets
+from .export_preset_base import ExportPresetAdd, ExportPresetRemove, ExportPresetRun
 
-class ExportOBJ(bpy.types.Operator):
-    """Obj파일을 한꺼번에 추출합니다."""
+
+class ExportOBJ(ExportPresetRun, bpy.types.Operator):
+    """선택한 오브젝트를 프리셋 설정으로 OBJ 파일로 추출합니다."""
     bl_idname = "object.export_obj"
     bl_label = "Export OBJ"
-    bl_options = {'REGISTER', 'UNDO'}
-    
-    def execute(self, context):
-        # Save directory
-        file_path = bpy.data.filepath
-        file_dir, file_name = os.path.split(file_path)
-        export_dir = os.path.join(file_dir, 'Obj')
 
-        if not os.path.exists(export_dir):
-            os.makedirs(export_dir)
-        else:
-            print("폴더가 이미 존재합니다:", export_dir)
+    spec = export_presets.OBJ_SPEC
 
-        # Select Object List
-        selObj = bpy.context.selected_objects
 
-        # Desellect All
-        bpy.ops.object.select_all(action='DESELECT')
+class ExportOBJPresetAdd(ExportPresetAdd, bpy.types.Operator):
+    """새 OBJ 내보내기 프리셋을 만들어 로컬에 저장합니다."""
+    bl_idname = "object.export_obj_preset_add"
+    bl_label = "프리셋"
 
-        for obj in selObj:
-            # Save File Name
-            export_path = os.path.join(export_dir, obj.name + '.obj')
-            print(export_path)
-            # Export Obj
-            obj.select_set(True)
-            bpy.ops.wm.obj_export(filepath=export_path, export_selected_objects=True)
-            bpy.ops.object.select_all(action='DESELECT')
-            
-        return {'FINISHED'}
+    spec = export_presets.OBJ_SPEC
+
+
+class ExportOBJPresetRemove(ExportPresetRemove, bpy.types.Operator):
+    """저장된 OBJ 내보내기 프리셋을 삭제합니다."""
+    bl_idname = "object.export_obj_preset_remove"
+    bl_label = "프리셋 삭제"
+
+    spec = export_presets.OBJ_SPEC
