@@ -42,7 +42,6 @@ def main():
         "object.match_name",
         "object.block_sort",
         "object.collision_maker",
-        "object.picking",
         "object.exportuv",
         "object.export_obj",
         "object.export_obj_preset_add",

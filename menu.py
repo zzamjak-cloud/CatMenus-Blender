@@ -15,7 +15,6 @@ from .operators import (
     ExportUV,
     MatchName,
     MissionIconMaker,
-    PickingMaker,
 )
 
 
@@ -86,9 +85,8 @@ class CatMenusMenu(bpy.types.Menu):
         layout.menu(ExportOBJPresetMenu.bl_idname, text=ExportOBJPresetMenu.bl_label, icon='EXPORT') # Export OBJ 프리셋 하위 메뉴
         layout.menu(ExportFBXPresetMenu.bl_idname, text=ExportFBXPresetMenu.bl_label, icon='EXPORT') # Export FBX 프리셋 하위 메뉴
         layout.separator()
-            # Colission / Picking
+            # Collision
         layout.operator(CollisionMaker.bl_idname, text=CollisionMaker.bl_label, icon='CUBE') # Collision Maker
-        layout.operator(PickingMaker.bl_idname, text=PickingMaker.bl_label, icon='MESH_CUBE') # Picking Maker
         layout.separator()
             # Clean Setting / Rotation Info / Mission Icon
         layout.operator(CleanSetting.bl_idname, text=CleanSetting.bl_label, icon='BRUSH_DATA') # Clean Setting

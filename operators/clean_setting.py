@@ -22,7 +22,7 @@ class CleanSetting(bpy.types.Operator):
         
         for obj in bpy.data.objects:
 
-            if ('Collision' not in obj.name) and ('Picking' not in obj.name):
+            if 'Collision' not in obj.name:
                 name = obj.name    # 오브젝트 이름
                 
                 # Clear all material slot of object

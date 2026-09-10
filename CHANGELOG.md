@@ -1,5 +1,12 @@
 # 변경 이력
 
+## 0.3.0
+
+- Collision maker가 원본 오브젝트의 pivot(원점)을 그대로 따라가도록 바꿨습니다. 생성된 Collision Cube의 원점은 원본 pivot과 같은 위치에 놓이고, 박스 형상은 원본의 실제 바운딩 박스를 감싸도록 배치됩니다. pivot이 형상 중심에서 벗어난 오브젝트에서도 Collision이 어긋나지 않습니다.
+- Collision Cube 크기를 `dimensions` 대신 월드 공간 바운딩 박스에서 계산합니다. 회전·부모 변환이 걸린 오브젝트도 실제 차지하는 범위에 맞게 생성됩니다.
+- Picking maker(`object.picking`)와 `Cat > Picking maker` 메뉴를 제거했습니다. 더 이상 사용하지 않는 기능입니다.
+- Clean Setting의 제외 조건에서 `Picking` 이름 검사를 함께 제거했습니다.
+
 ## 0.2.0
 
 - 프리셋 대화창의 옵션을 Blender 내보내기 연산자에서 그대로 복제하도록 바꿨습니다. 항목·영문 라벨·설명·기본값·범위가 Blender 기본 FBX/OBJ 내보내기 설정과 같고, `Include / Transform / Geometry / Armature / Animation` 패널 구성도 동일합니다.

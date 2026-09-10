@@ -107,14 +107,14 @@ Blender 실행 파일은 `PATH`의 `blender`, `BLENDER_BINARY` 환경 변수, ma
 $env:BLENDER_BINARY = "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe"; python scripts/build_release.py
 ```
 
-스크립트는 소스 검증, ZIP 빌드, ZIP 검증, `remote_repo/index.json` 생성을 순서대로 수행합니다. 생성물은 `dist/cat_menus-v0.2.0.zip`입니다.
+스크립트는 소스 검증, ZIP 빌드, ZIP 검증, `remote_repo/index.json` 생성을 순서대로 수행합니다. 생성물은 `dist/cat_menus-v0.3.0.zip`입니다.
 
 ## GitHub 배포
 
 이 저장소를 `zzamjak-cloud/CatMenus-Blender` 공개 저장소로 push한 뒤 새 버전 태그를 만들면 GitHub Actions가 ZIP을 빌드하고 Release에 첨부합니다.
 
 ```bash
-git tag v0.2.0
+git tag v0.3.0
 git push origin main --tags
 ```
 
