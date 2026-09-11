@@ -8,9 +8,11 @@ from .operators import (
     CollisionMaker,
     ExportFBX,
     ExportFBXPresetAdd,
+    ExportFBXPresetEdit,
     ExportFBXPresetRemove,
     ExportOBJ,
     ExportOBJPresetAdd,
+    ExportOBJPresetEdit,
     ExportOBJPresetRemove,
     ExportUV,
     MatchName,
@@ -25,6 +27,7 @@ class ExportPresetMenu:
     preset_key = ""
     run_operator = None
     add_operator = None
+    edit_operator = None
     remove_operator = None
 
     def draw(self, context):
@@ -39,6 +42,9 @@ class ExportPresetMenu:
             # 프리셋으로 즉시 내보내기
             run = row.operator(self.run_operator.bl_idname, text=name, icon='EXPORT')
             run.preset_name = name
+            # 프리셋 이름·옵션 수정
+            edit = row.operator(self.edit_operator.bl_idname, text="", icon='GREASEPENCIL', emboss=False)
+            edit.target_name = name
             # 프리셋 삭제
             remove = row.operator(self.remove_operator.bl_idname, text="", icon='X', emboss=False)
             remove.preset_name = name
@@ -55,6 +61,7 @@ class ExportFBXPresetMenu(ExportPresetMenu, bpy.types.Menu):
     preset_key = export_presets.FBX_KEY
     run_operator = ExportFBX
     add_operator = ExportFBXPresetAdd
+    edit_operator = ExportFBXPresetEdit
     remove_operator = ExportFBXPresetRemove
 
 
@@ -66,6 +73,7 @@ class ExportOBJPresetMenu(ExportPresetMenu, bpy.types.Menu):
     preset_key = export_presets.OBJ_KEY
     run_operator = ExportOBJ
     add_operator = ExportOBJPresetAdd
+    edit_operator = ExportOBJPresetEdit
     remove_operator = ExportOBJPresetRemove
 
 

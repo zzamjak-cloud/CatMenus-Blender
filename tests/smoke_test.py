@@ -45,9 +45,11 @@ def main():
         "object.exportuv",
         "object.export_obj",
         "object.export_obj_preset_add",
+        "object.export_obj_preset_edit",
         "object.export_obj_preset_remove",
         "object.export_fbx",
         "object.export_fbx_preset_add",
+        "object.export_fbx_preset_edit",
         "object.export_fbx_preset_remove",
         "object.clean_settings",
         "object.block_rotation_info",
@@ -102,10 +104,11 @@ def export_presets_module():
 class ExportCase:
     """내보내기 종류 하나에 대한 검증 설정."""
 
-    def __init__(self, key, run_idname, add_idname, remove_idname, extension, sample):
+    def __init__(self, key, run_idname, add_idname, edit_idname, remove_idname, extension, sample):
         self.key = key
         self.run_idname = run_idname
         self.add_idname = add_idname
+        self.edit_idname = edit_idname
         self.remove_idname = remove_idname
         self.extension = extension
         self.sample = sample  # 저장·복원을 확인할 옵션 값
@@ -116,6 +119,7 @@ EXPORT_CASES = (
         key="fbx",
         run_idname="object.export_fbx",
         add_idname="object.export_fbx_preset_add",
+        edit_idname="object.export_fbx_preset_edit",
         remove_idname="object.export_fbx_preset_remove",
         extension=".fbx",
         sample={
@@ -133,6 +137,7 @@ EXPORT_CASES = (
         key="obj",
         run_idname="object.export_obj",
         add_idname="object.export_obj_preset_add",
+        edit_idname="object.export_obj_preset_edit",
         remove_idname="object.export_obj_preset_remove",
         extension=".obj",
         sample={
@@ -176,17 +181,18 @@ def check_rna_mirror():
             fail(f"내보내기 연산자 RNA를 읽지 못했습니다: {spec.op_path}")
 
         source = spec.rna_properties()
-        dialog = resolve_operator_properties(case.add_idname)
 
-        # 프리셋에 담기는 모든 옵션이 대화창 프로퍼티로도 존재해야 한다.
-        for name in spec.option_names():
-            if name not in dialog:
-                fail(f"대화창에 옵션이 없습니다: {case.add_idname}.{name}")
-            if dialog[name].name != source[name].name:
-                fail(
-                    f"옵션 라벨이 Blender와 다릅니다: {name}: "
-                    f"{dialog[name].name!r} != {source[name].name!r}"
-                )
+        # 프리셋에 담기는 모든 옵션이 등록·수정 대화창 프로퍼티로도 존재해야 한다.
+        for idname in (case.add_idname, case.edit_idname):
+            dialog = resolve_operator_properties(idname)
+            for name in spec.option_names():
+                if name not in dialog:
+                    fail(f"대화창에 옵션이 없습니다: {idname}.{name}")
+                if dialog[name].name != source[name].name:
+                    fail(
+                        f"옵션 라벨이 Blender와 다릅니다: {name}: "
+                        f"{dialog[name].name!r} != {source[name].name!r}"
+                    )
 
         # Blender가 제공하는 옵션 중 제외 목록에 없는 것이 빠지면 안 된다.
         exposed = set(spec.option_names())
@@ -288,6 +294,9 @@ def check_preset_roundtrip(case):
 
         check_fixed_export_dir(case)
         check_single_file_mode(case)
+        check_invalid_object_name(case)
+        check_export_failure(case)
+        check_preset_edit(case)
 
         result = remove_operator('EXEC_DEFAULT', preset_name=preset_name)
         if result != {"FINISHED"}:
@@ -409,6 +418,212 @@ def check_single_file_mode(case):
             export_presets.remove_preset(case.key, preset_name)
 
     print(f"[CAT Menus Smoke] {case.key.upper()} 단일 파일 모드 통과")
+
+
+def check_invalid_object_name(case):
+    """파일 이름에 쓸 수 없는 문자가 든 오브젝트도 내보내지는지 검증한다."""
+    export_presets = export_presets_module()
+    base = importlib.import_module(f"{MODULE_NAME}.operators.export_preset_base")
+
+    # Blender 오브젝트 이름에는 들어갈 수 있지만 Windows 파일 이름에는 못 쓰는 문자들
+    for source, expected in (
+        ("Body:Arm", "Body_Arm"),
+        ("Body/Arm", "Body_Arm"),
+        ("Body\\Arm", "Body_Arm"),
+        ('Body*?"<>|', "Body______"),
+        ("Body ", "Body"),
+        ("NUL", "_NUL"),
+        ("CON.001", "_CON.001"),
+        ("", "untitled"),
+        ("Cube.001", "Cube.001"),
+    ):
+        actual = base.sanitize_file_name(source)
+        if actual != expected:
+            fail(f"파일 이름 보정 결과가 다릅니다: {source!r} -> {actual!r} != {expected!r}")
+
+    preset_name = f"CAT Invalid Name {case.key.upper()}"
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        export_dir = pathlib.Path(temp_dir) / "invalid_name"
+        result = resolve_operator(case.add_idname)(
+            'EXEC_DEFAULT',
+            preset_name=preset_name,
+            export_dir=str(export_dir),
+        )
+        if result != {"FINISHED"}:
+            fail(f"이름 보정 검증용 프리셋 등록 실패: {case.key}: {result}")
+
+        try:
+            bpy.ops.object.select_all(action="SELECT")
+            bpy.ops.object.delete()
+            bpy.ops.mesh.primitive_cube_add(size=1)
+            cube = bpy.context.object
+            cube.name = "Body:Arm"
+            cube.select_set(True)
+            bpy.context.view_layer.objects.active = cube
+            if cube.name != "Body:Arm":
+                fail(f"오브젝트 이름을 설정하지 못했습니다: {cube.name!r}")
+
+            result = resolve_operator(case.run_idname)('EXEC_DEFAULT', preset_name=preset_name)
+            if result != {"FINISHED"}:
+                fail(f"이름에 금지 문자가 있는 오브젝트 내보내기 실패: {case.key}: {result}")
+
+            # OBJ는 .mtl을 함께 쓰므로 확장자가 맞는 파일만 본다.
+            written = sorted(
+                child.name for child in export_dir.iterdir()
+                if child.suffix == case.extension
+            )
+            if written != [f"Body_Arm{case.extension}"]:
+                fail(f"보정된 이름으로 파일이 생기지 않았습니다: {case.key}: {written}")
+        finally:
+            export_presets.remove_preset(case.key, preset_name)
+
+    print(f"[CAT Menus Smoke] {case.key.upper()} 파일 이름 보정 통과")
+
+
+def check_export_failure(case):
+    """내보내기가 실패하면 성공으로 보고하지 않고 선택도 복원하는지 검증한다."""
+    export_presets = export_presets_module()
+    preset_name = f"CAT Failure {case.key.upper()}"
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        export_dir = pathlib.Path(temp_dir) / "failure"
+        result = resolve_operator(case.add_idname)(
+            'EXEC_DEFAULT',
+            preset_name=preset_name,
+            export_dir=str(export_dir),
+        )
+        if result != {"FINISHED"}:
+            fail(f"실패 검증용 프리셋 등록 실패: {case.key}: {result}")
+
+        try:
+            bpy.ops.object.select_all(action="SELECT")
+            bpy.ops.object.delete()
+            bpy.ops.mesh.primitive_cube_add(size=1)
+            blocked = bpy.context.object
+            blocked.name = "BlockedCube"
+            bpy.ops.mesh.primitive_cube_add(size=1, location=(2, 0, 0))
+            healthy = bpy.context.object
+            healthy.name = "HealthyCube"
+
+            # 내보낼 파일 자리에 같은 이름의 폴더를 두면 파일을 쓸 수 없다.
+            (export_dir / f"BlockedCube{case.extension}").mkdir(parents=True)
+
+            # 하나만 실패하면 나머지는 내보내고 경고만 남긴다.
+            blocked.select_set(True)
+            healthy.select_set(True)
+            bpy.context.view_layer.objects.active = healthy
+
+            result = resolve_operator(case.run_idname)('EXEC_DEFAULT', preset_name=preset_name)
+            if result != {"FINISHED"}:
+                fail(f"일부 실패 시 결과가 다릅니다: {case.key}: {result}")
+            if not (export_dir / f"HealthyCube{case.extension}").is_file():
+                fail(f"정상 오브젝트가 내보내지지 않았습니다: {case.key}")
+
+            # 전부 실패하면 성공으로 보고하지 않고 취소해야 한다.
+            bpy.ops.object.select_all(action="DESELECT")
+            blocked.select_set(True)
+            bpy.context.view_layer.objects.active = blocked
+
+            try:
+                result = resolve_operator(case.run_idname)('EXEC_DEFAULT', preset_name=preset_name)
+            except RuntimeError:
+                pass  # 오류 리포트는 bpy.ops에서 RuntimeError로 올라온다
+            else:
+                fail(f"내보내기에 실패했는데 취소되지 않았습니다: {case.key}: {result}")
+
+            # 실패해도 실행 전 선택 상태가 남아 있어야 한다.
+            if not blocked.select_get():
+                fail(f"실패 후 선택 상태가 복원되지 않았습니다: {case.key}")
+            if bpy.context.view_layer.objects.active is not blocked:
+                fail(f"실패 후 액티브 오브젝트가 복원되지 않았습니다: {case.key}")
+        finally:
+            export_presets.remove_preset(case.key, preset_name)
+
+    print(f"[CAT Menus Smoke] {case.key.upper()} 내보내기 실패 보고 통과")
+
+
+class EditLoadHost:
+    """ExportPresetEdit._load()에 넘길 연산자 대역."""
+
+    def __init__(self, spec, target_name):
+        self.spec = spec
+        self.target_name = target_name
+
+
+def check_preset_edit(case):
+    """프리셋 수정(값 불러오기·옵션 변경·이름 바꾸기)을 검증한다."""
+    export_presets = export_presets_module()
+    base = importlib.import_module(f"{MODULE_NAME}.operators.export_preset_base")
+    spec = export_presets.SPECS[case.key]
+
+    origin = f"CAT Edit {case.key.upper()}"
+    renamed = f"{origin} Renamed"
+    edit_operator = resolve_operator(case.edit_idname)
+
+    try:
+        result = resolve_operator(case.add_idname)(
+            'EXEC_DEFAULT', preset_name=origin, export_dir="", **case.sample
+        )
+        if result != {"FINISHED"}:
+            fail(f"수정 검증용 프리셋 등록 실패: {case.key}: {result}")
+
+        # 대화창을 열면 저장된 값이 그대로 채워져야 한다.
+        host = EditLoadHost(spec, origin)
+        base.ExportPresetEdit._load(host, spec.normalize(export_presets.get_preset(case.key, origin)))
+        if host.preset_name != origin:
+            fail(f"수정 대화창에 프리셋 이름이 채워지지 않았습니다: {host.preset_name!r}")
+        for key, expected in case.sample.items():
+            actual = getattr(host, key)
+            if isinstance(expected, set):
+                actual = set(actual)
+            if actual != expected:
+                fail(f"수정 대화창에 저장값이 채워지지 않았습니다: {key}={actual!r} != {expected!r}")
+
+        # 없는 프리셋을 수정하려 하면 취소되어야 한다.
+        try:
+            result = edit_operator('EXEC_DEFAULT', target_name="없는 프리셋", preset_name=origin)
+        except RuntimeError:
+            pass
+        else:
+            fail(f"없는 프리셋 수정이 취소되지 않았습니다: {case.key}: {result}")
+
+        # 이름과 옵션을 함께 바꾼다.
+        changed = dict(case.sample, global_scale=3.0)
+        result = edit_operator(
+            'EXEC_DEFAULT', target_name=origin, preset_name=renamed, export_dir="", **changed
+        )
+        if result != {"FINISHED"}:
+            fail(f"프리셋 수정 실패: {case.key}: {result}")
+
+        names = export_presets.preset_names(case.key)
+        if origin in names:
+            fail(f"이름을 바꿨는데 예전 프리셋이 남아 있습니다: {origin}")
+        if renamed not in names:
+            fail(f"바꾼 이름의 프리셋이 없습니다: {renamed}")
+
+        stored = export_presets.get_preset(case.key, renamed)
+        for key, expected in changed.items():
+            actual = stored[key]
+            if isinstance(expected, set):
+                actual = set(actual)
+            if actual != expected:
+                fail(f"수정한 값이 저장되지 않았습니다: {case.key}.{key}={actual!r} != {expected!r}")
+
+        # 이름을 그대로 두고 옵션만 바꿀 수도 있어야 한다.
+        result = edit_operator(
+            'EXEC_DEFAULT', target_name=renamed, preset_name=renamed, export_dir="",
+            **dict(case.sample, global_scale=4.0)
+        )
+        if result != {"FINISHED"}:
+            fail(f"이름을 유지한 프리셋 수정 실패: {case.key}: {result}")
+        if export_presets.get_preset(case.key, renamed)["global_scale"] != 4.0:
+            fail(f"이름을 유지한 수정이 저장되지 않았습니다: {case.key}")
+    finally:
+        export_presets.remove_preset(case.key, origin)
+        export_presets.remove_preset(case.key, renamed)
+
+    print(f"[CAT Menus Smoke] {case.key.upper()} 프리셋 수정 통과")
 
 
 class DrawHost:
@@ -538,7 +753,7 @@ def check_menu_draw():
             if preset_name not in texts:
                 fail(f"하위 메뉴에 프리셋이 표시되지 않았습니다: {texts}")
             idnames = {entry[1] for entry in operators}
-            for expected in (case.run_idname, case.add_idname, case.remove_idname):
+            for expected in (case.run_idname, case.add_idname, case.edit_idname, case.remove_idname):
                 if expected not in idnames:
                     fail(f"하위 메뉴에 항목이 없습니다: {expected}")
 
@@ -556,17 +771,18 @@ def check_menu_draw():
             if any(entry[0] == "operator" and entry[1] == case.run_idname for entry in log):
                 fail("프리셋이 없는데 내보내기 항목이 표시되었습니다.")
 
-            # 프리셋 등록 대화창 draw 경로
-            log = []
-            add_class = next(
-                cls for cls in importlib.import_module(MODULE_NAME).CLASSES
-                if getattr(cls, "bl_idname", "") == case.add_idname
-            )
-            add_class.draw(DrawHost(StubLayout(log), case.add_idname, owner=add_class), bpy.context)
-            drawn = {entry[1] for entry in log if entry[0] == "prop"}
-            missing = ({"preset_name", "export_dir", "export_mode"} | set(spec.option_names())) - drawn
-            if missing:
-                fail(f"프리셋 대화창에 빠진 프로퍼티가 있습니다: {sorted(missing)}")
+            # 프리셋 등록·수정 대화창 draw 경로
+            for idname in (case.add_idname, case.edit_idname):
+                log = []
+                dialog_class = next(
+                    cls for cls in importlib.import_module(MODULE_NAME).CLASSES
+                    if getattr(cls, "bl_idname", "") == idname
+                )
+                dialog_class.draw(DrawHost(StubLayout(log), idname, owner=dialog_class), bpy.context)
+                drawn = {entry[1] for entry in log if entry[0] == "prop"}
+                missing = ({"preset_name", "export_dir", "export_mode"} | set(spec.option_names())) - drawn
+                if missing:
+                    fail(f"프리셋 대화창에 빠진 프로퍼티가 있습니다: {idname}: {sorted(missing)}")
         finally:
             export_presets.remove_preset(case.key, preset_name)
 
