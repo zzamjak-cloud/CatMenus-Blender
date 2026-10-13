@@ -18,6 +18,7 @@ from .collision_maker import CollisionMaker
 from .clean_setting import CleanSetting
 from .block_rotation_info import BlockRotationInfo
 from .mission_icon_maker import MissionIconMaker
+from .jp_layout import JPLayout
 
 OPERATOR_CLASSES = (
     BlockSort,
@@ -35,6 +36,7 @@ OPERATOR_CLASSES = (
     CleanSetting,
     BlockRotationInfo,
     MissionIconMaker,
+    JPLayout,
 )
 
 # 프리셋 등록·수정 대화창과 짝이 되는 내보내기 정의

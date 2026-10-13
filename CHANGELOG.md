@@ -1,5 +1,10 @@
 # 변경 이력
 
+## 0.5.0
+
+- `Cat > JP Layout` 메뉴를 추가했습니다. 한 번 누르면 열린 모든 3D 뷰포트를 Solid 셰이딩(Lighting `Flat`, Wireframe `Theme`, Color `Texture`)으로 바꾸고, 오버레이의 `Statistics`와 `Face Orientation`을 켭니다.
+- 같은 메뉴에서 `Auto Merge Vertices`와 Vertex 스내핑도 켭니다. 씬 단위 설정이라 Edit 모드에 그대로 적용됩니다.
+
 ## 0.4.0
 
 - 내보내기 프리셋 수정 기능을 추가했습니다. 하위 메뉴의 프리셋 오른쪽 연필 버튼을 누르면 저장된 값이 그대로 채워진 대화창이 열리고, 옵션과 이름을 고쳐 저장할 수 있습니다. 이름을 바꾸면 예전 이름의 프리셋은 사라집니다(이름 바꾸기).

@@ -15,6 +15,7 @@ from .operators import (
     ExportOBJPresetEdit,
     ExportOBJPresetRemove,
     ExportUV,
+    JPLayout,
     MatchName,
     MissionIconMaker,
 )
@@ -101,6 +102,8 @@ class CatMenusMenu(bpy.types.Menu):
         layout.operator(BlockRotationInfo.bl_idname, text=BlockRotationInfo.bl_label, icon='INFO') # Block Rotation Info
         layout.operator(MissionIconMaker.bl_idname, text=MissionIconMaker.bl_label, icon='OUTLINER_OB_CAMERA') # Mission Icon Maker
         layout.separator()
+            # JP Layout
+        layout.operator(JPLayout.bl_idname, text=JPLayout.bl_label, icon='WORKSPACE') # JP Layout
 
 
 def menu_func(self, context):

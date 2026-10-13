@@ -54,6 +54,7 @@ def main():
         "object.clean_settings",
         "object.block_rotation_info",
         "object.mission_icon_maker",
+        "view3d.jp_layout",
     ]
     for idname in expected:
         assert_operator(idname)
