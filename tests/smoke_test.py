@@ -88,6 +88,7 @@ def main():
     if result != {"FINISHED"}:
         fail(f"MatchName 실행 실패: {result}")
 
+    check_jp_layout()
     check_rna_mirror()
     with preset_store_backup():
         for case in EXPORT_CASES:
@@ -170,6 +171,22 @@ class preset_store_backup:
         elif self.path.exists():
             self.path.unlink()
         return False
+
+
+def check_jp_layout():
+    """JP Layout이 Vertex 스냅 대상만 고르고 스냅 자체는 끄는지 확인한다."""
+    tool_settings = bpy.context.scene.tool_settings
+    tool_settings.use_snap = True
+    tool_settings.snap_elements = {"INCREMENT"}
+    result = bpy.ops.view3d.jp_layout()
+    if result != {"FINISHED"}:
+        fail(f"JP Layout 실행 실패: {result}")
+    if tool_settings.use_snap:
+        fail("JP Layout이 스냅을 끄지 않았습니다.")
+    if set(tool_settings.snap_elements) != {"VERTEX"}:
+        fail(f"JP Layout 스냅 대상이 Vertex가 아닙니다: {set(tool_settings.snap_elements)}")
+    if not tool_settings.use_mesh_automerge:
+        fail("JP Layout이 Auto Merge를 켜지 않았습니다.")
 
 
 def check_rna_mirror():

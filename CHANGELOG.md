@@ -1,5 +1,10 @@
 # 변경 이력
 
+## 0.5.1
+
+- `JP Layout`이 스냅 대상을 Vertex로 고르기만 하고 스냅 자체는 끕니다. 스냅은 Ctrl을 누른 동안만 쓰는 방식이라 상시 활성화할 필요가 없습니다.
+- `JP Layout`을 누르면 메뉴를 연 3D 뷰포트에서 선택한 오브젝트만 보이는 Isolate(Local View)로 들어갑니다. 이미 Isolate 중이면 현재 선택으로 다시 Isolate 하고, 선택한 오브젝트가 없으면 이 단계만 건너뜁니다.
+
 ## 0.5.0
 
 - `Cat > JP Layout` 메뉴를 추가했습니다. 한 번 누르면 열린 모든 3D 뷰포트를 Solid 셰이딩(Lighting `Flat`, Wireframe `Theme`, Color `Texture`)으로 바꾸고, 오버레이의 `Statistics`와 `Face Orientation`을 켭니다.
