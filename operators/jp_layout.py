@@ -39,6 +39,7 @@ class JPLayout(bpy.types.Operator):
         overlay.show_overlays = True
         overlay.show_stats = True
         overlay.show_face_orientation = True
+        overlay.show_wireframes = True
 
     def isolate_selected(self, context):
         """메뉴를 연 3D 뷰포트에서 선택한 오브젝트만 Local View(Isolate)로 보여 준다."""
